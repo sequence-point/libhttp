@@ -1,0 +1,44 @@
+#include <libasio-mocks/immediate-executor.hxx>
+#include <libasio-mocks/stream.hxx>
+#include <libunittest/libunittest.hxx>
+
+#include <libhttp/protocol/read-response.hxx>
+
+#include <asio.hpp>
+
+namespace {
+
+  static char response[]{ "HTTP/1.1 400 Bad Request\r\n"
+                          "Server: Sample/1.0\r\n"
+                          "\r\n" };
+
+} // namespace
+
+DEFINE_TEST("sync response")
+{
+  asio::mocks::stream stream{ asio::mocks::immediate_executor{},
+                              asio::buffer(response), 10000 };
+  asio::streambuf buffer;
+
+  http::protocol::response r;
+
+  TEST_DOES_NOT_THROW({ http::protocol::read_response(stream, buffer, r); });
+
+  TEST_EQUAL(r.reason(), "Bad Request");
+}
+
+DEFINE_TEST("async response")
+{
+  asio::mocks::stream stream{ asio::mocks::immediate_executor{},
+                              asio::buffer(response), 10 };
+  asio::streambuf buffer;
+
+  http::protocol::response r;
+
+  auto ct = [&](std::error_code const& ec, std::size_t bytes_transferred) {
+    TEST_EQUAL(ec, std::error_code{});
+    TEST_EQUAL(r.reason(), "Bad Request");
+  };
+
+  http::protocol::async_read_response(stream, buffer, r, ct);
+}

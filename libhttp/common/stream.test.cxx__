@@ -1,0 +1,8 @@
+#include <libhttp/common/stream.hxx>
+#include <libunittest/libunittest.hxx>
+
+DEFINE_TEST("Instantiate")
+{
+  asio::io_context ioc;
+  http::common::io::stream stream{ asio::ip::tcp::socket{ ioc } };
+}

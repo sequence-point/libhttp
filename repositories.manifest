@@ -1,0 +1,18 @@
+: 1
+summary: libhttp project repository
+
+:
+role: prerequisite
+location: https://git.build2.org/packaging/openssl/openssl.git##HEAD
+
+:
+role: prerequisite
+location: https://github.com/sequence-point/libunittest.git##HEAD
+
+:
+role: prerequisite
+location: https://github.com/sequence-point/libasio.git##HEAD
+
+:
+role: prerequisite
+location: https://github.com/sequence-point/liburi.git##HEAD

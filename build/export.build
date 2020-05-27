@@ -1,0 +1,6 @@
+$out_root/
+{
+  include libhttp/
+}
+
+export $out_root/libhttp/$import.target

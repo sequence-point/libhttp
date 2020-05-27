@@ -1,0 +1,8 @@
+This package contains libhttp.
+
+libhttp is a lightweight, embeddable, HTTP server for C++ applications.
+
+See the LICENSE file for the distribution conditions.
+
+Questions, bugs, and any other feedback can be sent to
+support@sequence-point.se.

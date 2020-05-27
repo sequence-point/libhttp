@@ -1,0 +1,13 @@
+: 1
+name: libhttp
+version: 0.1.0-a.0.z
+summary: http C++ library
+license: proprietary
+description-file: README.md
+url: https://example.org/libhttp
+email: per.edin@sequence-point.se
+depends: * build2 >= 0.12.0
+depends: * bpkg >= 0.12.0
+depends: libssl >= 1.1.1
+depends: libasio ^1.16.1
+depends: liburi ^0.1.0-

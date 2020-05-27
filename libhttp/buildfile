@@ -1,0 +1,58 @@
+int_libs = # Interface dependencies.
+imp_libs = # Implementation dependencies.
+
+import int_libs =+ libssl%lib{ssl}
+import int_libs =+ libasio%lib{asio}
+import int_libs =+ liburi%lib{uri}
+
+import test_libs = libunittest%lib{unittest}
+
+./: lib{http}: {hxx ixx txx}{** -**.test... -version} hxx{version} \
+  $imp_libs $int_libs
+
+# Unit tests.
+#
+exe{*.test}:
+{
+  test = true
+  install = false
+}
+
+for t: cxx{**.test...}
+{
+  d = $directory($t)
+  n = $name($t)...
+
+  ./: $d/exe{$n}: $t $d/{hxx ixx txx}{+$n} $d/testscript{+$n} lib{http} $test_libs
+}
+
+# Include the generated version header into the distribution (so that we don't
+# pick up an installed one) and don't remove it when cleaning in src (so that
+# clean results in a state identical to distributed).
+#
+hxx{version}: in{version} $src_root/manifest
+{
+  dist  = true
+  clean = ($src_root != $out_root)
+}
+
+# Build options.
+#
+cxx.poptions =+ "-I$out_root" "-I$src_root"
+
+# Export options.
+#
+lib{http}:
+{
+  cxx.export.poptions = "-I$out_root" "-I$src_root"
+  cxx.export.libs = $int_libs
+}
+
+# Install into the libhttp/ subdirectory of, say, /usr/include/
+# recreating subdirectories.
+#
+{hxx ixx txx}{*}:
+{
+  install         = include/libhttp/
+  install.subdirs = true
+}

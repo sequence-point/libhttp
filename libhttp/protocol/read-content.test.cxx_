@@ -1,0 +1,110 @@
+#include <libunittest/libunittest.hxx>
+
+#include <libhttp/protocol/read-content.hxx>
+
+#include <asio.hpp>
+#include <libasio-mocks/immediate-executor.hxx>
+#include <libasio-mocks/stream.hxx>
+
+char const* text1{ "he" };
+char const* text2{ "llo" };
+
+DEFINE_TEST("read_content only returns bytes transferred")
+{
+  // Empty input buffer.
+  {
+    asio::streambuf input_buffer;
+
+    asio::mocks::stream stream{ asio::mocks::immediate_executor{},
+                                asio::buffer("hello", 5), 128 };
+
+    char target[5];
+
+    auto bytes_transferred = http::protocol::read_content(
+      stream, input_buffer, asio::buffer(target), 5);
+
+    TEST_EQUAL(bytes_transferred, 5);
+
+    TEST_EQUAL(target[0], 'h');
+    TEST_EQUAL(target[1], 'e');
+    TEST_EQUAL(target[2], 'l');
+    TEST_EQUAL(target[3], 'l');
+    TEST_EQUAL(target[4], 'o');
+  }
+
+  // Partially filled input buffer.
+  {
+    asio::streambuf input_buffer;
+    asio::buffer_copy(input_buffer.prepare(2), asio::buffer("he", 2));
+    input_buffer.commit(2);
+
+    asio::mocks::stream stream{ asio::mocks::immediate_executor{},
+                                asio::buffer("llo", 3), 128 };
+
+    char target[5];
+
+    auto bytes_transferred = http::protocol::read_content(
+      stream, input_buffer, asio::buffer(target), 5);
+
+    TEST_EQUAL(bytes_transferred, 3);
+
+    TEST_EQUAL(target[0], 'h');
+    TEST_EQUAL(target[1], 'e');
+    TEST_EQUAL(target[2], 'l');
+    TEST_EQUAL(target[3], 'l');
+    TEST_EQUAL(target[4], 'o');
+  }
+
+  // Fully filled input buffer.
+  {
+    asio::streambuf input_buffer;
+    asio::buffer_copy(input_buffer.prepare(5), asio::buffer("hello", 5));
+    input_buffer.commit(5);
+
+    asio::mocks::stream stream{ asio::mocks::immediate_executor{},
+                                asio::const_buffer{}, 128 };
+
+    char target[5];
+
+    auto bytes_transferred = http::protocol::read_content(
+      stream, input_buffer, asio::buffer(target), 5);
+
+    TEST_EQUAL(bytes_transferred, 0);
+
+    TEST_EQUAL(target[0], 'h');
+    TEST_EQUAL(target[1], 'e');
+    TEST_EQUAL(target[2], 'l');
+    TEST_EQUAL(target[3], 'l');
+    TEST_EQUAL(target[4], 'o');
+  }
+}
+
+DEFINE_TEST("async_read_content works as expected")
+{
+  // Empty input buffer.
+  {
+    asio::streambuf input_buffer;
+    asio::buffer_copy(input_buffer.prepare(2), asio::buffer("he", 2));
+    input_buffer.commit(2);
+
+    asio::mocks::stream stream{ asio::mocks::immediate_executor{},
+                                asio::buffer("llo", 3), 128 };
+
+    char target[5];
+
+    auto buf = asio::buffer(target, 5);
+
+    auto ct = [&](std::error_code const& ec, std::size_t bytes_transferred) {
+      TEST_EQUAL(ec, std::error_code{});
+      TEST_EQUAL(bytes_transferred, 3);
+
+      TEST_EQUAL(target[0], 'h');
+      TEST_EQUAL(target[1], 'e');
+      TEST_EQUAL(target[2], 'l');
+      TEST_EQUAL(target[3], 'l');
+      TEST_EQUAL(target[4], 'o');
+    };
+
+    http::protocol::async_read_content(stream, input_buffer, buf, ct);
+  }
+}

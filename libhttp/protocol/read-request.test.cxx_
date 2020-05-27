@@ -1,0 +1,47 @@
+#include <libasio-mocks/immediate-executor.hxx>
+#include <libasio-mocks/stream.hxx>
+#include <libunittest/libunittest.hxx>
+
+#include <libhttp/protocol/read-request.hxx>
+
+#include <asio.hpp>
+
+namespace {
+
+  static char request[]{ "GET /index.html HTTP/1.1\r\n"
+                         "Host: localhost\r\n"
+                         "User-Agent: Sample/1.0\r\n"
+                         "\r\n" };
+
+} // namespace
+
+DEFINE_TEST("SynchronouslyReadRequest")
+{
+  asio::mocks::stream stream{ asio::mocks::immediate_executor{},
+                              asio::buffer(request), 10000 };
+  asio::streambuf buffer;
+
+  http::protocol::request r;
+
+  TEST_DOES_NOT_THROW({ http::protocol::read_request(stream, buffer, r); });
+
+  TEST_EQUAL(r.method(), "GET");
+  TEST_EQUAL(r.target(), "/index.html");
+}
+
+DEFINE_TEST("AsynchronouslyReadRequest")
+{
+  asio::mocks::stream stream{ asio::mocks::immediate_executor{},
+                              asio::buffer(request), 10 };
+  asio::streambuf buffer;
+
+  http::protocol::request r;
+
+  auto ct = [&](std::error_code const& ec, std::size_t bytes_transferred) {
+    TEST_EQUAL(ec, std::error_code{});
+    TEST_EQUAL(r.method(), "GET");
+    TEST_EQUAL(r.target(), "/index.html");
+  };
+
+  http::protocol::async_read_request(stream, buffer, r, ct);
+}

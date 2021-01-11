@@ -47,7 +47,9 @@ namespace server {
       if (current_tx_)
         throw std::invalid_argument{ "already in transaction" };
 
-      auto on_complete = [this, self](std::error_code const& ec) {};
+      auto on_complete = [this, self](std::error_code const& ec) {
+        std::cout << "Transaction completed\n";
+      };
 
       current_tx_.reset(new transaction_type{
         io_context_, connection_, handler_, std::move(on_complete) });

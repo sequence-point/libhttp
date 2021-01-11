@@ -12,7 +12,7 @@ class transaction;
 class middleware {
 public:
   template< typename Handler >
-  explicit middleware(Handler handler)
+  middleware(Handler handler)
     : handler_{ std::make_shared< handler_model< Handler > >(
         std::move(handler)) }
   {}
@@ -77,13 +77,6 @@ make_middleware(Args&&... args)
   return { middleware::from_handler,
            std::make_shared< handler_model >(std::forward< Args >(args)...) };
 }
-
-class middleware_chain {
-public:
-  void
-  operator()()
-  {}
-};
 
 inline request_handler
 make_middleware_chain(std::vector< middleware > middlewares,

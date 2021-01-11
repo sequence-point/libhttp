@@ -15,12 +15,11 @@ namespace http::server {
 
 class server {
 public:
-  server(asio::io_context& io_context,
-         asio::ip::tcp::endpoint endpoint,
-         request_handler handler);
+  server(asio::io_context& io_context, asio::ip::tcp::endpoint endpoint, request_handler handler);
 
   void
   start();
+
   void
   stop();
 
@@ -33,8 +32,7 @@ protected:
 
 private:
   using http_transaction = basic_transaction< server, common::http_connection >;
-  using https_transaction =
-    basic_transaction< server, common::https_connection >;
+  using https_transaction = basic_transaction< server, common::https_connection >;
 
   friend http_transaction;
   friend https_transaction;

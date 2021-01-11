@@ -25,7 +25,7 @@ namespace routing {
       on_request(tx);
     }
 
-    // FIXME virtual void route_not_found(tx)
+    // TODO virtual void route_not_found(tx)
 
   private:
     routing::routing_table rt_;

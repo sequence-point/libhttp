@@ -327,6 +327,7 @@ namespace protocol {
     }
 
     assert(false);
+    throw std::logic_error{ "parser in invalid state" };
   }
 
   template< typename Iterator >

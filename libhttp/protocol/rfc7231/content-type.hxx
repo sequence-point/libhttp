@@ -3,27 +3,23 @@
 
 #include <libhttp/protocol/media-type.hxx>
 
-namespace http {
-namespace protocol {
-  namespace rfc7231 {
+namespace http::protocol::rfc7231 {
 
-    struct ContentType {
-      using alias_type = media_type;
+struct ContentType {
+  using alias_type = media_type;
 
-      static constexpr const char* name = "content-type";
+  static constexpr const char* name = "content-type";
 
-      static optional< media_type >
-      try_parse(std::vector< std::string > const& strings)
-      {
-        if (auto it = strings.rbegin(); it != strings.rend())
-          return media_type::try_parse(*it);
+  static optional< media_type >
+  try_parse(std::vector< std::string > const& strings)
+  {
+    if (auto it = strings.rbegin(); it != strings.rend())
+      return media_type::try_parse(*it);
 
-        return {};
-      }
-    };
+    return {};
+  }
+};
 
-  } // namespace rfc7231
-} // namespace protocol
-} // namespace http
+} // namespace http::protocol::rfc7231
 
 #endif

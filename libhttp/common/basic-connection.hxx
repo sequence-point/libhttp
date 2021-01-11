@@ -15,116 +15,114 @@
 #include <system_error>
 #include <type_traits>
 
-namespace http {
-namespace common {
+namespace http::common {
 
-  // TODO rename basic_http_connection
-  template< typename StreamType >
-  class basic_connection {
-  public:
-    using stream_type = StreamType;
+// TODO rename basic_http_connection
+template< typename StreamType >
+class basic_connection {
+public:
+  using stream_type = StreamType;
 
-    explicit basic_connection(stream_type stream);
+  explicit basic_connection(stream_type stream);
 
-    basic_connection(basic_connection const&) = delete;
+  basic_connection(basic_connection const&) = delete;
 
-    basic_connection(basic_connection&& other);
+  basic_connection(basic_connection&& other);
 
-    stream_type&
-    get_stream();
-    stream_type const&
-    get_stream() const;
+  stream_type&
+  get_stream();
 
-    //
-    // read_request
-    //
+  stream_type const&
+  get_stream() const;
 
-    std::size_t
-    read_request(protocol::request& r);
+  //
+  // read_request
+  //
 
-    std::size_t
-    read_request(protocol::request& r, std::error_code& ec);
+  std::size_t
+  read_request(protocol::request& r);
 
-    template< typename CompletionToken >
-    auto
-    async_read_request(protocol::request& r, CompletionToken token);
+  std::size_t
+  read_request(protocol::request& r, std::error_code& ec);
 
-    //
-    // read_response
-    //
+  template< typename CompletionToken >
+  auto
+  async_read_request(protocol::request& r, CompletionToken token);
 
-    std::size_t
-    read_response(protocol::response& r);
+  //
+  // read_response
+  //
 
-    std::size_t
-    read_response(protocol::response& r, std::error_code& ec);
+  std::size_t
+  read_response(protocol::response& r);
 
-    template< typename CompletionToken >
-    auto
-    async_read_response(protocol::response& r, CompletionToken token);
+  std::size_t
+  read_response(protocol::response& r, std::error_code& ec);
 
-    //
-    // read_content
-    //
+  template< typename CompletionToken >
+  auto
+  async_read_response(protocol::response& r, CompletionToken token);
 
-    template< typename ContentBuffer, typename CompletionToken >
-    auto
-    async_read_content(protocol::request const& r,
-                       ContentBuffer& content,
-                       CompletionToken&& token);
+  //
+  // read_content
+  //
 
-    template< typename ContentBuffer, typename CompletionToken >
-    auto
-    async_read_content(protocol::response const& r,
-                       ContentBuffer& content,
-                       CompletionToken&& token);
+  template< typename ContentBuffer, typename CompletionToken >
+  auto
+  async_read_content(protocol::request const& r,
+                     ContentBuffer& content,
+                     CompletionToken&& token);
 
-    //
-    // write_request
-    //
+  template< typename ContentBuffer, typename CompletionToken >
+  auto
+  async_read_content(protocol::response const& r,
+                     ContentBuffer& content,
+                     CompletionToken&& token);
 
-    template< typename ConstBufferSequence >
-    std::size_t
-    write_request(protocol::request const& r,
-                  ConstBufferSequence const& content);
+  //
+  // write_request
+  //
 
-    template< typename ConstBufferSequence >
-    std::size_t
-    write_request(protocol::request const& r,
-                  ConstBufferSequence const& content,
-                  std::error_code& ec);
+  template< typename ConstBufferSequence >
+  std::size_t
+  write_request(protocol::request const& r, ConstBufferSequence const& content);
 
-    //
-    // write_response
-    //
+  template< typename ConstBufferSequence >
+  std::size_t
+  write_request(protocol::request const& r,
+                ConstBufferSequence const& content,
+                std::error_code& ec);
 
-    template< typename ConstBufferSequence >
-    std::size_t
-    write_response(protocol::response const& r,
-                   ConstBufferSequence const& content);
+  //
+  // write_response
+  //
 
-    template< typename ConstBufferSequence >
-    std::size_t
-    write_response(protocol::response const& r,
-                   ConstBufferSequence const& content,
-                   std::error_code& ec);
+  template< typename ConstBufferSequence >
+  std::size_t
+  write_response(protocol::response const& r,
+                 ConstBufferSequence const& content);
 
-  private:
-    stream_type stream_;
-    asio::streambuf input_buffer_;
-  };
+  template< typename ConstBufferSequence >
+  std::size_t
+  write_response(protocol::response const& r,
+                 ConstBufferSequence const& content,
+                 std::error_code& ec);
 
-  //! \brief Alias for an HTTP connection.
-  using http_connection = basic_connection< asio::ip::tcp::socket >;
+private:
+  stream_type stream_;
+  asio::streambuf input_buffer_;
+};
 
-  //! \brief Alias for an SSL socket.
-  using ssl_socket = asio::ssl::stream< asio::ip::tcp::socket >;
+//! Alias for an HTTP connection.
+using http_connection = basic_connection< asio::ip::tcp::socket >;
 
-  //! \brief Alias for an HTTPS connection.
-  using https_connection = basic_connection< ssl_socket >;
+//! Alias for an SSL socket.
+using ssl_socket = asio::ssl::stream< asio::ip::tcp::socket >;
 
-} // namespace common
-} // namespace http
+//! Alias for an HTTPS connection.
+using https_connection = basic_connection< ssl_socket >;
+
+} // namespace http::common
 
 #include <libhttp/common/basic-connection.ixx>
 

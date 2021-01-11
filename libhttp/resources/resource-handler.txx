@@ -35,20 +35,17 @@ resource_handler< R, F >::on_method_not_allowed(
     while (++it != allowed_methods.end())
       str << ", " << *it;
   }
+
   tx.response().set_header("Allow", str.str());
 
-  tx.response().set_status(405);
-  tx.send(asio::const_buffer{});
+  tx.send_error(server::common_error::method_not_allowed);
 }
 
 template< typename R, typename F >
 void
 resource_handler< R, F >::on_method_not_supported(server::transaction& tx) const
 {
-  std::cout << "method not supported\n";
-
-  tx.response().set_status(501);
-  tx.send(asio::const_buffer{});
+  tx.send_error(server::common_error::not_implemented);
 }
 
 template< typename R, typename F >
@@ -59,9 +56,7 @@ resource_handler< R, F >::handle_resource(server::transaction& tx,
   if (r)
     handle_resource(tx, *r);
 
-  // TODO allow the use of an external 404 handler
-  tx.response().set_status(404);
-  tx.send({});
+  tx.send_error(server::common_error::not_found);
 }
 
 template< typename R, typename F >

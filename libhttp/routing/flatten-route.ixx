@@ -11,15 +11,15 @@ flatten_route(std::vector< endpoint >& endpoints,
   //      };
   auto const path = r.path().empty() ? root : (root + '/' + r.path());
 
+  // Append any middlewares if we have any.
+  for (auto const& m : r.middleware())
+    middlewares.emplace_back(m);
+
   // Generate an endpoint for this route if we have a handler.
   if (auto const& h = r.handler()) {
     endpoints.emplace_back(path,
                            server::make_middleware_chain(middlewares, *h));
   }
-
-  // Append the middleware if we have one.
-  for (auto const& m : r.middleware())
-    middlewares.emplace_back(m);
 
   // Flatten any child routes.
   for (auto const& child_route : r.children())

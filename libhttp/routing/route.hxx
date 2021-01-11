@@ -16,15 +16,20 @@ namespace http::routing {
 
 class route {
 public:
+  //! Construct a new route.
   route();
 
+  //! Construct a new route.
   explicit route(std::string path);
 
+  //! Construct a new route.
   route(std::string path, server::request_handler handler);
 
+  //! Get the path segment of this route.
   std::string const&
   path() const;
 
+  //! Get any middleware attached to this route.
   std::vector< server::middleware > const&
   middleware() const;
 
@@ -69,7 +74,7 @@ private:
   // Must be std::list to prevent invalidation of references to
   // individual routes.
   std::list< route > children_;
-}; // namespace http::routingclassroute
+};
 
 std::ostream&
 to_stream(std::ostream& o, route const& r, size_t indent);

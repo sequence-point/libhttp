@@ -11,69 +11,93 @@
 
 #include <istream>
 
-namespace http {
-namespace server {
+namespace http::server {
 
-  class transaction {
-  public:
-    class stream;
+//! Polymorphic base class for transactions.
+class transaction {
+public:
+  class stream;
 
-    virtual protocol::request&
-    request() = 0;
-    virtual protocol::request const&
-    request() const = 0;
+  //! Access the request message.
+  virtual protocol::request&
+  request() = 0;
 
-    virtual std::istream&
-    request_content() = 0;
+  //! Access the request message.
+  virtual protocol::request const&
+  request() const = 0;
 
-    virtual protocol::response&
-    response() = 0;
-    virtual protocol::response const
-    response() const = 0;
+  //! Access the request content.
+  virtual std::istream&
+  request_content() = 0;
 
-    virtual void
-    send(asio::const_buffer const& content) = 0;
-    virtual void
-    send(stream const& content) = 0;
-    virtual void
-    send_error(common_error const& error) = 0;
+  //! Access the response message.
+  virtual protocol::response&
+  response() = 0;
 
-    stream
-    alloc_stream();
+  //! Access the response message.
+  virtual protocol::response const
+  response() const = 0;
 
-    system::allocator&
-    memory();
-    system::extension_context&
-    extensions();
+  //! Send a response.
+  virtual void
+  send(asio::const_buffer const& content) = 0;
 
-  protected:
-    transaction() = default;
-    ~transaction() noexcept = default;
+  //! Send a response.
+  virtual void
+  send(stream const& content) = 0;
 
-  private:
-    system::allocator allocator_;
-    system::extension_context extensions_;
-  };
+  //! Send error.
+  virtual void
+  send_error(common_error const& error) = 0;
 
-  class transaction::stream : public std::iostream {
-  public:
-    asio::streambuf*
-    rdbuf() const
-    {
-      return buf_;
-    }
+  //! Allocate a new stream owned by this transaction.
+  stream
+  alloc_stream();
 
-  private:
-    friend class transaction;
+  //! Access the transaction allocator.
+  system::allocator&
+  memory();
 
-    explicit stream(asio::streambuf* buf) : buf_{ buf }, std::iostream{ buf }
-    {}
+  //! Access the extensions manager.
+  system::extension_context&
+  extensions();
 
-    asio::streambuf* buf_;
-  };
+protected:
+  //! Construct a new transaction.
+  transaction() = default;
 
-} // namespace server
-} // namespace http
+  //! Destroy this transaction.
+  ~transaction() noexcept = default;
+
+private:
+  system::allocator allocator_;
+  system::extension_context extensions_;
+};
+
+class transaction::stream : public std::iostream {
+public:
+  asio::streambuf*
+  rdbuf() const
+  {
+    return buf_;
+  }
+
+  std::size_t
+  size() const
+  {
+    return buf_->size();
+  }
+
+private:
+  friend transaction;
+
+  explicit stream(asio::streambuf* buf) : buf_{ buf }, std::iostream{ buf }
+  {}
+
+  asio::streambuf* buf_;
+};
+
+} // namespace http::server
 
 #include <libhttp/server/transaction.ixx>
 

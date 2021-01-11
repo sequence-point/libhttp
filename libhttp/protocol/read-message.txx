@@ -126,7 +126,7 @@ namespace protocol {
           }
 
           state_ = reading;
-          std::size_t bytes_to_read = 512;
+          std::size_t bytes_to_read = 262144;
 
           stream_.async_read_some(buffer_.prepare(bytes_to_read),
                                   std::move(*this));
@@ -137,7 +137,7 @@ namespace protocol {
     complete(std::error_code const& ec, std::size_t bytes_transferred)
     {
       if (state_ == starting) {
-        auto bound = [=, this]() { token_(ec, bytes_transferred); };
+        auto bound = [=]() { token_(ec, bytes_transferred); };
 
         asio::post(stream_.get_executor(), bound);
         return;

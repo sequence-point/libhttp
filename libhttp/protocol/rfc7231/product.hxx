@@ -7,105 +7,110 @@
 #include <string>
 #include <vector>
 
-namespace http {
-namespace protocol {
-  namespace rfc7231 {
+namespace http::protocol::rfc7231 {
 
-    struct product {
-      std::string product;
-      std::string version;
-    };
+struct product {
+  product() = default;
 
-    using products = std::vector< product >;
+  explicit product(std::string name) : name{ std::move(name) }
+  {}
 
-    inline void
-    to_stream(std::ostream& o, product const& the_product)
-    {
-      if (the_product.product.empty())
-        return;
+  product(std::string name, std::string version)
+    : name{ std::move(name) }, version{ std::move(version) }
+  {}
 
-      o << the_product.product;
+  std::string name;
+  std::string version;
+};
 
-      if (!the_product.version.empty())
-        o << '/' << the_product.version;
-    }
+using products = std::vector< product >;
 
-    inline std::string
-    to_string(product const& the_product)
-    {
-      std::ostringstream str_stream;
-      to_stream(str_stream, the_product);
-      return str_stream.str();
-    }
+inline void
+to_stream(std::ostream& o, product const& p)
+{
+  if (p.name.empty())
+    return;
 
-    inline void
-    to_stream(std::ostream& o, products const& the_products)
-    {
-      for (auto const& j : the_products) {
-        to_stream(o, j);
-        o << ' ';
-      }
-    }
+  o << p.name;
 
-    inline std::string
-    to_string(products const& the_products)
-    {
-      std::ostringstream str_stream;
-      to_stream(str_stream, the_products);
-      return str_stream.str();
-    }
+  if (!p.version.empty())
+    o << '/' << p.version;
+}
 
-    template< typename InputIterator >
-    optional< product >
-    try_parse_product(InputIterator& first, InputIterator last)
-    {
-      product the_product;
+inline std::string
+to_string(product const& p)
+{
+  std::ostringstream str_stream;
+  to_stream(str_stream, p);
+  return str_stream.str();
+}
 
-      the_product.product = try_parse_token(first, last);
+inline void
+to_stream(std::ostream& o, products const& ps)
+{
+  for (auto const& j : ps) {
+    to_stream(o, j);
+    o << ' ';
+  }
+}
 
-      if (first != last && *first == '/') {
-        ++first; // skips '/'
-        the_product.version = try_parse_token(first, last);
-      }
+inline std::string
+to_string(products const& ps)
+{
+  std::ostringstream str_stream;
+  to_stream(str_stream, ps);
+  return str_stream.str();
+}
 
-      return { the_product };
-    }
+template< typename InputIterator >
+optional< product >
+try_parse_product(InputIterator& first, InputIterator last)
+{
+  product p;
 
-    inline optional< product >
-    try_parse_product(std::string const& str)
-    {
-      auto begin = str.begin();
-      return try_parse_product(begin, str.end());
-    }
+  p.name = try_parse_token(first, last);
 
-    template< typename InputIterator >
-    products
-    try_parse_products(InputIterator& first, InputIterator last)
-    {
-      products the_products;
+  if (first != last && *first == '/') {
+    ++first; // skips '/'
+    p.version = try_parse_token(first, last);
+  }
 
-      while (first != last) {
-        auto the_product = try_parse_product(first, last);
+  return { p };
+}
 
-        if (the_product)
-          the_products.emplace_back(std::move(*the_product));
+inline optional< product >
+try_parse_product(std::string const& str)
+{
+  auto begin = str.begin();
+  return try_parse_product(begin, str.end());
+}
 
-        while (first != last && grammar::is_space(*first))
-          ++first; // skips whitespace
-      }
+template< typename InputIterator >
+products
+try_parse_products(InputIterator& first, InputIterator last)
+{
+  products ps;
 
-      return the_products;
-    }
+  while (first != last) {
+    auto p = try_parse_product(first, last);
 
-    inline products
-    try_parse_products(std::string const& str)
-    {
-      auto begin = str.begin();
-      return try_parse_products(begin, str.end());
-    }
+    if (p)
+      ps.emplace_back(std::move(*p));
 
-  } // namespace rfc7231
-} // namespace protocol
-} // namespace http
+    while (first != last && grammar::is_space(*first))
+      ++first; // skips whitespace
+  }
+
+  return ps;
+}
+
+inline products
+try_parse_products(std::string const& str)
+{
+  auto begin = str.begin();
+  return try_parse_products(begin, str.end());
+}
+
+} // namespace http::protocol::rfc7231
 
 #endif

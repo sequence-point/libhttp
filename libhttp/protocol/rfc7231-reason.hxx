@@ -4,6 +4,7 @@
 namespace http {
 namespace protocol {
 
+  // TODO use status_code instead of unsigned short?
   inline char const*
   get_rfc7231_reason(unsigned short code)
   {

@@ -26,7 +26,9 @@ namespace protocol {
 
     inline std::string
     to_string(LastModified const& last_modified)
-    {}
+    {
+      return {};
+    }
 
   } // namespace rfc7232
 } // namespace protocol

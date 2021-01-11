@@ -14,38 +14,35 @@
 
 #include <chrono>
 
-namespace http {
-namespace models {
+namespace http::models {
 
-  struct model_metadata {
-    //
-    // From RFC 7231
-    //
+struct model_metadata {
+  // From RFC 7231
+  //
 
-    std::optional< protocol::media_type > content_type;
+  std::optional< protocol::media_type > content_type;
 
-    //
-    // From RFC 7232
-    //
+  // From RFC 7232
+  //
 
-    std::optional< protocol::rfc7232::entity_tag > etag;
-    std::optional< std::chrono::system_clock::time_point > last_modified;
-  };
+  std::optional< protocol::rfc7232::entity_tag > etag;
+  std::optional< std::chrono::system_clock::time_point > last_modified;
+};
 
-  bool
-  operator==(model_metadata const& lhs, model_metadata const& rhs);
-  bool
-  operator!=(model_metadata const& lhs, model_metadata const& rhs);
+bool
+operator==(model_metadata const& lhs, model_metadata const& rhs);
 
-  template< typename T >
-  model_metadata
-  get_metadata(T const& model);
+bool
+operator!=(model_metadata const& lhs, model_metadata const& rhs);
 
-  void
-  set_metadata(protocol::message& m, model_metadata const& metadata);
+template< typename T >
+model_metadata
+get_metadata(T const& model);
 
-} // namespace models
-} // namespace http
+void
+set_metadata(protocol::message& m, model_metadata const& metadata);
+
+} // namespace http::models
 
 #include <libhttp/models/metadata.ixx>
 #include <libhttp/models/metadata.txx>

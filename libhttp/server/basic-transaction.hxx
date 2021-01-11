@@ -5,12 +5,15 @@
 #include <libhttp/server/transaction.hxx>
 
 #include <libhttp/protocol/rfc7230/host.hxx>
+#include <libhttp/protocol/rfc7231/date.hxx>
+#include <libhttp/protocol/rfc7231/server.hxx>
 
 #include <functional>
 #include <iostream> // TODO remove
 
 namespace http::server {
 
+// TODO make shared through std::enable_shared_from_this
 template< typename Server, typename ConnectionType >
 class basic_transaction : public transaction {
 public:
@@ -101,7 +104,7 @@ public:
   void
   start()
   {
-    std::cout << "Staring transaction\n";
+    std::cout << "Starting transaction\n";
     init_read_request();
   }
 
@@ -111,8 +114,7 @@ protected:
   {
     std::cout << "Begin reading TX request...\n";
 
-    auto on_read_request = [this](std::error_code const& ec,
-                                  std::size_t bytes_transferred) {
+    auto on_read_request = [this](std::error_code const& ec, std::size_t bytes_transferred) {
       this->on_read_request(ec, bytes_transferred);
     };
 
@@ -122,8 +124,9 @@ protected:
   void
   on_read_request(std::error_code const& ec, std::size_t bytes_transferred)
   {
-
     if (ec) {
+      prepare_response();
+      send_error(common_error::bad_request);
       return; // TODO how to handle?
     }
 
@@ -134,7 +137,8 @@ protected:
 
     // Determine if the request actually has content.
     // TODO read content if request can be expected
-    // to contain content.
+    // to contain content, otherwise prepare response and
+    // dispatch directly.
 
     init_read_content();
   }
@@ -144,13 +148,11 @@ protected:
   {
     std::cout << "Starting to read content...\n";
 
-    auto on_read_content = [this](std::error_code const& ec,
-                                  std::size_t bytes_transferred) {
+    auto on_read_content = [this](std::error_code const& ec, std::size_t bytes_transferred) {
       this->on_read_content(ec, bytes_transferred);
     };
 
-    get_connection().async_read_content(request_, request_content_,
-                                        on_read_content);
+    get_connection().async_read_content(request_, request_content_, on_read_content);
   }
 
   void
@@ -158,6 +160,7 @@ protected:
   {
     if (ec) {
       std::cout << "Received error when reading request content\n";
+      get_connection().get_stream().close();
       return; // TODO how to handle?
     }
 
@@ -172,8 +175,28 @@ protected:
   void
   prepare_response()
   {
+    namespace rfc7231 = protocol::rfc7231;
+
     response_ = protocol::response{ 200 };
     response_.set_version(request_.version());
+
+    response_.set_header("connection", "close"); // TODO temporary solution.
+
+    using protocol::set;
+
+    set< rfc7231::Server >(response_, rfc7231::products{ rfc7231::product{ "libhttp" } });
+    set< rfc7231::Date >(response_, std::chrono::system_clock::now());
+  }
+
+  void
+  finalize_response(std::size_t content_length)
+  {
+    // Set content-type if not already set.
+    if (!response().headers().contains("content-type"))
+      response().set_header("content-type", "application/octet-stream");
+
+    // Always set content-length to the size of the buffer being sent.
+    response().set_header("content-length", std::to_string(content_length));
   }
 
   void
@@ -182,6 +205,9 @@ protected:
     auto bound = [this]() {
       try {
         handler_.invoke(*this);
+
+        // TODO check if the transaction is complete (i.e. send has been called()).
+        //      if not, do some default action, i.e. close the connection.
       }
       catch (...) {
         server_.on_exception(*this);
@@ -199,7 +225,10 @@ protected:
     // TODO make this async
     std::error_code ec;
 
-    response_content_ = content;
+    if (request().method() != "HEAD")
+      response_content_ = content;
+
+    finalize_response(asio::buffer_size(content));
 
     get_connection().write_response(response_, response_content_, ec);
     get_connection().get_stream().close();
@@ -224,7 +253,5 @@ private:
 };
 
 } // namespace http::server
-
-//#include <libhttp/server/basic-transaction.txx>
 
 #endif
